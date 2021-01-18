@@ -1,0 +1,93 @@
+**Schema (MySQL v5.7)**
+
+    create table DEPARTMENT(dno integer primary key ,dname varchar(20) ,mgrssn integer(10),mgrstartdate date);
+    
+        insert into DEPARTMENT values(5,'research',111222333,'2002-10-06');
+        insert into DEPARTMENT values(1,'administration',555666777,'2006-12-05');
+        insert into DEPARTMENT values(3,'headquarter',777888999,'2013-01-01');
+        insert into DEPARTMENT values(4,'accounts',222333444,'2011-04-10');
+        
+        create table EMPLOYEE(ssn integer(10) primary key,name varchar(20),address varchar(30),sex char,salary integer,superssn integer(10),dno integer,foreign key(dno) references DEPARTMENT(dno));
+        
+        insert into EMPLOYEE values(111222333,'scott','fondron','m',65000,777888999,3);
+        insert into EMPLOYEE values(555666777,'alicia','voss','f',85000,333444555,4);
+        insert into EMPLOYEE values(333444555,'narayan','berry','m',600000,111222333,5);
+        insert into EMPLOYEE values(444555666,'almod','houston','m',200000,555666777,1);
+        insert into EMPLOYEE values(777888999,'zelaya','stanford','f',95000,444555666,4);
+        insert into EMPLOYEE values(466666666,'lmod','udupi','m',2000000,555666777,1);
+        insert into EMPLOYEE values(799999999,'ziya','mysore','f',9500000,444555666,1);
+        insert into EMPLOYEE values(440555666,'amod','houston','m',2000800,555666777,1);
+        insert into EMPLOYEE values(777777999,'laya','stan','f',9500009,444555666,1);
+        insert into EMPLOYEE values(888888999,'liya','stann','f',9500009,444555666,1);
+        
+        create table DLOCATION(dno integer,dloc varchar(30),primary key(dno,dloc),foreign key(dno) references DEPARTMENT(dno));
+                                                                                                                         
+        insert into DLOCATION values(4,'stanford');
+        insert into DLOCATION values(1,'houston');
+        insert into DLOCATION values(5,'sugarland');
+        insert into DLOCATION values(3,'beibre');
+        insert into DLOCATION values(4,'berry');     
+        
+        create table PROJECT(pno integer primary key,pname varchar(10),plocation varchar(30),dno integer,foreign key(dno) references DEPARTMENT(dno));
+                                                                                                                                                
+        insert into PROJECT values(40,'projX','houston',1);
+        insert into PROJECT values(30,'projY','berry',4);
+        insert into PROJECT values(10,'IOT','beibre',3);
+        insert into PROJECT values(50,'projZ','sugarland',5);
+        insert into PROJECT values(20,'projT','stanford',4);   
+        
+        create table WORKS_ON(ssn integer(10),pno integer,hours integer,primary key(ssn,pno),foreign key(ssn) references EMPLOYEE(ssn),foreign key(pno) references PROJECT(pno));
+        
+        insert into WORKS_ON values(333444555,30,29);
+        insert into WORKS_ON values(111222333,20,38);
+        insert into WORKS_ON values(555666777,50,45);
+        insert into WORKS_ON values(444555666,10,27);
+        insert into WORKS_ON values(777888999,40,37);
+        
+
+---
+
+**Query #1**
+
+    (select distinct pno from PROJECT p,DEPARTMENT d,EMPLOYEE e where p.dno=d.dno and ssn=mgrssn and name='scott') 
+            union 
+            (select distinct p.pno from PROJECT p,WORKS_ON w,EMPLOYEE e where p.pno=w.pno and w.ssn=e.ssn and name='scott');
+
+| pno |
+| --- |
+| 50  |
+| 20  |
+
+---
+**Query #2**
+
+    select name,1.1*salary as incr_salary from EMPLOYEE e,WORKS_ON w,PROJECT p
+            where e.ssn=w.ssn and w.pno=p.pno and pname='IOT';
+
+| name  | incr_salary |
+| ----- | ----------- |
+| almod | 220000.0    |
+
+---
+**Query #3**
+
+    select sum(salary),max(salary),min(salary),avg(salary) from EMPLOYEE e,DEPARTMENT d 
+            where d.dno=e.dno and dname='accounts';
+
+| sum(salary) | max(salary) | min(salary) | avg(salary) |
+| ----------- | ----------- | ----------- | ----------- |
+| 180000      | 95000       | 85000       | 90000.0000  |
+
+---
+**Query #5**
+
+    select dno,count(ssn) from EMPLOYEE where salary>600000 and dno in
+        (select dno from EMPLOYEE group by dno having count(ssn)>5) group by dno;
+
+| dno | count(ssn) |
+| --- | ---------- |
+| 1   | 5          |
+
+---
+
+[View on DB Fiddle](https://www.db-fiddle.com/f/jSNKPjBa4TF6mDRV19k1Wy/2)
